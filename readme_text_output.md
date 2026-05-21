@@ -1,6 +1,6 @@
-(eag-cognitive-agent) (base) varun@varun-Latitude-3410:~/Documents/workspace/schoolofai/Assignment 6/eag-cognitive-agent$ xdg-open docs/project-guide.pdf
-(eag-cognitive-agent) (base) varun@varun-Latitude-3410:~/Documents/workspace/schoolofai/Assignment 6/eag-cognitive-agent$ rm -rf state workspace && mkdir -p state workspace
-(eag-cognitive-agent) (base) varun@varun-Latitude-3410:~/Documents/workspace/schoolofai/Assignment 6/eag-cognitive-agent$ uv run python agent6.py --preset a
+Terminal$ xdg-open docs/project-guide.pdf
+Terminal$ rm -rf state workspace && mkdir -p state workspace
+Terminal$ uv run python agent6.py --preset a
 
 ============================================================
 RUN 2e87bd08
@@ -44,7 +44,7 @@ Claude Shannon's birth date was April 30, 1916, and his death date was February 
 *   **Information Theory:** His 1948 paper "A Mathematical Theory of Communication" laid the foundations for this field, introducing concepts like the "bit" and entropy in information theory.
 *   **Boolean Algebra and Digital Circuits:** His master's thesis demonstrated the application of Boolean algebra to relay and switching circuits, establishing the theoretical basis for digital computing and digital circuits.
 *   **Cryptography:** He made fundamental contributions to cryptanalysis during World War II, including work on codebreaking and secure telecommunications, which are considered foundational to modern cryptography.
-(eag-cognitive-agent) (base) varun@varun-Latitude-3410:~/Documents/workspace/schoolofai/Assignment 6/eag-cognitive-agent$ uv run python agent6.py --preset b
+Terminal$ uv run python agent6.py --preset b
 
 ============================================================
 RUN 82233782
@@ -116,7 +116,7 @@ Based on the search results, here are a few family-friendly options:
 *   **Warner Bros. Studio Tour Tokyo – The Making of Harry Potter:** This is a popular indoor attraction that would be perfect for a rainy day.
 *   **Tokyo Disneyland or DisneySea:** These theme parks offer a wide range of indoor rides and attractions, making them a great option regardless of the weather.
 *   **Ghibli Museum:** For fans of Studio Ghibli animation, this museum offers a unique and immersive indoor experience.
-(eag-cognitive-agent) (base) varun@varun-Latitude-3410:~/Documents/workspace/schoolofai/Assignment 6/eag-cognitive-agent$ uv run python agent6.py --preset c1
+Terminal$ uv run python agent6.py --preset c1
 
 ============================================================
 RUN 1b0033c1
@@ -161,7 +161,7 @@ FINAL:
 I can't set a calendar reminder directly, but I've recorded Mom's birthday as May 15, 2026, in the file `workspace/mom_birthday.txt`. You can use this information to set a reminder in your preferred calendar application.
 
 I can't set a calendar reminder directly, but I've recorded Mom's birthday as May 15, 2026, in the file `workspace/mom_birthday.txt`. You can use this information to set a reminder in your preferred calendar application.
-(eag-cognitive-agent) (base) varun@varun-Latitude-3410:~/Documents/workspace/schoolofai/Assignment 6/eag-cognitive-agent$ uv run python agent6.py --preset c2
+Terminal$ uv run python agent6.py --preset c2
 
 ============================================================
 RUN 5c281181
@@ -190,7 +190,7 @@ The information has been confirmed from previous records and memory hits.
 Mom's birthday is on May 15, 2026.  
 This date is recorded in the workspace file `mom_birthday.txt`.  
 The information has been confirmed from previous records and memory hits.
-(eag-cognitive-agent) (base) varun@varun-Latitude-3410:~/Documents/workspace/schoolofai/Assignment 6/eag-cognitive-agent$ uv run python agent6.py --preset d
+Terminal$ uv run python agent6.py --preset d
 
 ============================================================
 RUN 6d9924cf
@@ -265,4 +265,4 @@ Here's a synthesis of common advice on Python asyncio best practices from the to
 *   **Manage tasks effectively:** Use `asyncio.create_task()` to schedule coroutines to run concurrently. Be mindful of task cancellation and error handling to prevent unexpected behavior.
 *   **Handle exceptions properly:** Asynchronous code can introduce new patterns of error propagation. Ensure you have robust error handling mechanisms in place for your coroutines and tasks.
 *   **Understand the event loop:** While you don't always need to interact with it directly, having a conceptual understanding of how the event loop manages tasks and callbacks is crucial for debugging and optimizing asynchronous applications.
-(eag-cognitive-agent) (base) varun@varun-Latitude-3410:~/Documents/workspace/schoolofai/Assignment 6/eag-cognitive-agent$ 
+Terminal$ 
