@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DecisionOutput",
+  "description": "Exactly one of answer (gateway text) or tool_call (native tool use)",
+  "oneOf": [
+    { "type": "object", "required": ["answer"], "properties": { "answer": { "type": "string", "minLength": 1 } } },
+    {
+      "type": "object",
+      "required": ["tool_call"],
+      "properties": {
+        "tool_call": {
+          "type": "object",
+          "required": ["name", "arguments"],
+          "properties": {
+            "name": { "type": "string" },
+            "arguments": { "type": "object" }
+          }
+        }
+      }
+    }
+  ]
+}

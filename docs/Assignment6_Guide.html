@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>EAG Cognitive Agent — Architecture Guide</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    @page { size: A4; margin: 18mm 16mm; }
+    html, body {
+      margin: 0; padding: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.45;
+      color: #1a1a2e;
+      background: #fff;
+    }
+    body {
+      max-width: 100%;
+      padding: 12px 14px 24px;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    h1 { font-size: 20pt; color: #0f3460; margin: 0 0 8px; border-bottom: 3px solid #e94560; padding-bottom: 6px; }
+    h2 { font-size: 14pt; color: #16213e; margin: 22px 0 10px; page-break-after: avoid; }
+    h3 { font-size: 11.5pt; color: #0f3460; margin: 14px 0 6px; page-break-after: avoid; }
+    p, li { margin: 0 0 6px; }
+    ul, ol { margin: 4px 0 10px; padding-left: 22px; }
+    .subtitle { color: #555; font-size: 10pt; margin-bottom: 16px; }
+    .box {
+      background: #f8f9fc;
+      border: 1px solid #d0d7e2;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin: 10px 0;
+      page-break-inside: avoid;
+    }
+    .warn { background: #fff8e6; border-color: #e6c200; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      font-size: 9.5pt;
+      table-layout: fixed;
+      page-break-inside: avoid;
+    }
+    th, td {
+      border: 1px solid #c8d0dc;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    th { background: #16213e; color: #fff; font-weight: 600; }
+    tr:nth-child(even) td { background: #f4f6fa; }
+    code, pre {
+      font-family: "Consolas", "Ubuntu Mono", monospace;
+      font-size: 8.5pt;
+      background: #eef1f6;
+      border-radius: 3px;
+    }
+    code { padding: 1px 4px; }
+    pre {
+      padding: 8px 10px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      margin: 8px 0;
+      border: 1px solid #d0d7e2;
+    }
+    .diagram-wrap {
+      width: 100%;
+      max-width: 100%;
+      margin: 12px 0;
+      page-break-inside: avoid;
+      overflow: hidden;
+    }
+    .diagram-wrap svg {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+    }
+    .legend { font-size: 9pt; color: #444; margin-top: 4px; }
+    .page-break { page-break-before: always; }
+    .toc a { color: #0f3460; text-decoration: none; }
+    .footer { margin-top: 24px; font-size: 9pt; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 8px; }
+  </style>
+</head>
+<body>
+
+<h1>EAG Cognitive Agent</h1>
+<p class="subtitle">EAG V3 Session 6 · Four-role cognitive agent · MCP tools · LLM Gateway V3<br>
+School of AI — Complete project guide with architecture diagrams</p>
+
+<div class="box toc">
+  <strong>Contents</strong>
+  <ol>
+    <li>Project purpose and design principles</li>
+    <li>High-level system diagram</li>
+    <li>The four cognitive roles</li>
+    <li>Main agent loop (flowchart)</li>
+    <li>Data flow: memory, artifacts, history</li>
+    <li>MCP tools (nine tools)</li>
+    <li>Assignment presets (Queries A–D)</li>
+    <li>File map and dependencies</li>
+    <li>How to run (step by step)</li>
+    <li>Troubleshooting</li>
+  </ol>
+</div>
+
+<h2>1. Project purpose</h2>
+<p>This assignment builds a <strong>multi-step AI agent</strong> that answers complex questions (web search, fetch pages, files, durable memory) without LangChain, LangGraph, or one monolithic prompt.</p>
+<p>Instead, cognition is split into <strong>four roles</strong>, each with a narrow contract (Pydantic models in <code>schemas.py</code>). Roles communicate through typed data and a shared <strong>run history</strong>. All LLM calls go through the course <strong>LLM Gateway</strong> (port 8101, with V2 fallback on 8100).</p>
+
+<div class="box">
+  <strong>Design principles</strong>
+  <ul>
+    <li><strong>Goal isolation</strong> — Decision sees only <em>one</em> goal at a time, not the full plan.</li>
+    <li><strong>Perception owns the plan</strong> — Goal list, done flags, when to attach large files.</li>
+    <li><strong>Memory is durable</strong> — <code>state/memory.json</code> survives across runs (Query C2).</li>
+    <li><strong>Artifacts for scale</strong> — Pages &gt;4KB stored under <code>state/artifacts/</code>; referenced as <code>art:…</code>.</li>
+    <li><strong>Tools via MCP</strong> — Action dispatches stdio MCP server; nine real tools.</li>
+  </ul>
+</div>
+
+<h2>2. High-level system diagram</h2>
+<div class="diagram-wrap">
+<svg viewBox="0 0 720 320" xmlns="http://www.w3.org/2000/svg" role="img">
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#333"/>
+    </marker>
+  </defs>
+  <rect x="280" y="8" width="160" height="36" rx="6" fill="#e94560" stroke="#333"/>
+  <text x="360" y="30" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">User Query</text>
+  <rect x="260" y="58" width="200" height="40" rx="6" fill="#0f3460" stroke="#333"/>
+  <text x="360" y="82" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">agent6.py (orchestrator)</text>
+  <line x1="360" y1="44" x2="360" y2="58" stroke="#333" marker-end="url(#arr)"/>
+  <rect x="20" y="120" width="130" height="50" rx="6" fill="#533483" stroke="#333"/>
+  <text x="85" y="142" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Memory</text>
+  <text x="85" y="158" text-anchor="middle" fill="#eee" font-size="9">remember / read</text>
+  <rect x="170" y="120" width="130" height="50" rx="6" fill="#1a508b" stroke="#333"/>
+  <text x="235" y="142" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Perception</text>
+  <text x="235" y="158" text-anchor="middle" fill="#eee" font-size="9">goals + done</text>
+  <rect x="320" y="120" width="130" height="50" rx="6" fill="#1a508b" stroke="#333"/>
+  <text x="385" y="142" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Decision</text>
+  <text x="385" y="158" text-anchor="middle" fill="#eee" font-size="9">1 goal / step</text>
+  <rect x="470" y="120" width="130" height="50" rx="6" fill="#0e6b5c" stroke="#333"/>
+  <text x="535" y="142" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Action</text>
+  <text x="535" y="158" text-anchor="middle" fill="#eee" font-size="9">MCP execute</text>
+  <line x1="360" y1="98" x2="85" y2="120" stroke="#333" marker-end="url(#arr)"/>
+  <line x1="360" y1="98" x2="235" y2="120" stroke="#333" marker-end="url(#arr)"/>
+  <line x1="360" y1="98" x2="385" y2="120" stroke="#333" marker-end="url(#arr)"/>
+  <line x1="360" y1="98" x2="535" y2="120" stroke="#333" marker-end="url(#arr)"/>
+  <rect x="40" y="200" width="140" height="44" rx="6" fill="#f4f6fa" stroke="#666"/>
+  <text x="110" y="218" text-anchor="middle" font-size="10" font-weight="bold">state/memory.json</text>
+  <text x="110" y="234" text-anchor="middle" font-size="9">durable facts</text>
+  <rect x="220" y="200" width="140" height="44" rx="6" fill="#f4f6fa" stroke="#666"/>
+  <text x="290" y="218" text-anchor="middle" font-size="10" font-weight="bold">state/artifacts/</text>
+  <text x="290" y="234" text-anchor="middle" font-size="9">large payloads</text>
+  <rect x="400" y="200" width="140" height="44" rx="6" fill="#f4f6fa" stroke="#666"/>
+  <text x="470" y="218" text-anchor="middle" font-size="10" font-weight="bold">mcp_server.py</text>
+  <text x="470" y="234" text-anchor="middle" font-size="9">9 tools (stdio)</text>
+  <rect x="580" y="200" width="120" height="44" rx="6" fill="#fff3cd" stroke="#996"/>
+  <text x="640" y="218" text-anchor="middle" font-size="10" font-weight="bold">LLM Gateway</text>
+  <text x="640" y="234" text-anchor="middle" font-size="9">:8101 / :8100</text>
+  <line x1="85" y1="170" x2="110" y2="200" stroke="#666" stroke-dasharray="4"/>
+  <line x1="535" y1="170" x2="470" y2="200" stroke="#666" stroke-dasharray="4"/>
+  <line x1="235" y1="170" x2="640" y2="200" stroke="#996" stroke-dasharray="4"/>
+  <line x1="385" y1="170" x2="640" y2="200" stroke="#996" stroke-dasharray="4"/>
+  <rect x="240" y="268" width="240" height="40" rx="6" fill="#16213e" stroke="#333"/>
+  <text x="360" y="292" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Final answer (from history)</text>
+  <line x1="360" y1="244" x2="360" y2="268" stroke="#333" marker-end="url(#arr)"/>
+</svg>
+</div>
+<p class="legend">Solid arrows: control flow each iteration. Dashed: persistence and external services.</p>
+
+<h2>3. The four cognitive roles</h2>
+<table>
+  <tr><th style="width:18%">Role</th><th style="width:22%">Module</th><th>Responsibility</th><th style="width:14%">LLM?</th></tr>
+  <tr>
+    <td><strong>Memory</strong></td>
+    <td><code>memory.py</code></td>
+    <td><code>remember()</code> stores user query and outcomes. <code>read()</code> keyword-filters relevant hits for current step. <code>record_outcome()</code> after each tool call. Persists to <code>state/memory.json</code>.</td>
+    <td>remember only</td>
+  </tr>
+  <tr>
+    <td><strong>Perception</strong></td>
+    <td><code>perception.py</code></td>
+    <td><code>observe()</code> returns goal list with <code>done</code> flags and optional <code>attach_artifact_id</code>. Decides when all goals satisfied. Uses Gemini (<code>provider=g</code>, temp 1.0).</td>
+    <td>Yes</td>
+  </tr>
+  <tr>
+    <td><strong>Decision</strong></td>
+    <td><code>decision.py</code></td>
+    <td><code>next_step()</code> for <em>one</em> goal: either structured <strong>answer</strong> or single <strong>tool_call</strong>. Sees attached artifact text when Perception requests it.</td>
+    <td>Yes</td>
+  </tr>
+  <tr>
+    <td><strong>Action</strong></td>
+    <td><code>action.py</code></td>
+    <td><code>execute()</code> calls MCP tool. Results &gt;4KB → <code>ArtifactStore</code>. Blocks <code>art:</code> IDs inside tool arguments (must use attach flow).</td>
+    <td>No</td>
+  </tr>
+</table>
+
+<h2>4. Main agent loop (detailed flowchart)</h2>
+<div class="diagram-wrap">
+<svg viewBox="0 0 700 520" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#333"/></marker>
+  </defs>
+  <rect x="240" y="4" width="220" height="32" rx="16" fill="#e94560"/>
+  <text x="350" y="24" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">START: User query</text>
+  <rect x="220" y="48" width="260" height="28" rx="4" fill="#533483"/>
+  <text x="350" y="66" text-anchor="middle" fill="#fff" font-size="10">memory.remember(query)</text>
+  <line x1="350" y1="36" x2="350" y2="48" stroke="#333" marker-end="url(#a2)"/>
+  <rect x="200" y="88" width="300" height="28" rx="4" fill="#0f3460"/>
+  <text x="350" y="106" text-anchor="middle" fill="#fff" font-size="10">Open MCP session (list 9 tools)</text>
+  <line x1="350" y1="76" x2="350" y2="88" stroke="#333" marker-end="url(#a2)"/>
+  <rect x="230" y="128" width="240" height="28" rx="4" fill="#1a508b"/>
+  <text x="350" y="146" text-anchor="middle" fill="#fff" font-size="10">ITERATION (max 24)</text>
+  <line x1="350" y1="116" x2="350" y2="128" stroke="#333" marker-end="url(#a2)"/>
+  <rect x="180" y="168" width="160" height="26" rx="4" fill="#f0e6ff" stroke="#533483"/>
+  <text x="260" y="185" text-anchor="middle" font-size="9">memory.read(query, history)</text>
+  <rect x="360" y="168" width="200" height="26" rx="4" fill="#e8f4fc" stroke="#1a508b"/>
+  <text x="460" y="185" text-anchor="middle" font-size="9">perception.observe(...) → goals</text>
+  <line x1="350" y1="156" x2="260" y2="168" stroke="#333" marker-end="url(#a2)"/>
+  <line x1="350" y1="156" x2="460" y2="168" stroke="#333" marker-end="url(#a2)"/>
+  <polygon points="350,210 310,240 390,240" fill="#fff8e6" stroke="#996"/>
+  <text x="350" y="232" text-anchor="middle" font-size="9">all goals done?</text>
+  <line x1="260" y1="194" x2="330" y2="210" stroke="#333"/>
+  <line x1="460" y1="194" x2="370" y2="210" stroke="#333"/>
+  <rect x="280" y="252" width="140" height="24" rx="4" fill="#0e6b5c"/>
+  <text x="350" y="268" text-anchor="middle" fill="#fff" font-size="9">BREAK → final answer</text>
+  <line x1="350" y1="240" x2="350" y2="252" stroke="#333" marker-end="url(#a2)"/>
+  <text x="400" y="228" font-size="8">YES</text>
+  <rect x="200" y="290" width="300" height="26" rx="4" fill="#e8f4fc" stroke="#1a508b"/>
+  <text x="350" y="307" text-anchor="middle" font-size="9">next_unfinished goal → maybe attach artifact bytes</text>
+  <line x1="310" y1="240" x2="280" y2="290" stroke="#333" marker-end="url(#a2)"/>
+  <text x="318" y="268" font-size="8">NO</text>
+  <rect x="210" y="330" width="280" height="26" rx="4" fill="#e8f4fc" stroke="#1a508b"/>
+  <text x="350" y="347" text-anchor="middle" font-size="9">decision.next_step(one goal, hits, attached, tools)</text>
+  <line x1="350" y1="316" x2="350" y2="330" stroke="#333" marker-end="url(#a2)"/>
+  <polygon points="350,372 310,402 390,402" fill="#fff8e6" stroke="#996"/>
+  <text x="350" y="394" text-anchor="middle" font-size="9">answer or tool?</text>
+  <line x1="350" y1="356" x2="350" y2="372" stroke="#333" marker-end="url(#a2)"/>
+  <rect x="80" y="418" width="180" height="26" rx="4" fill="#d4edda" stroke="#28a745"/>
+  <text x="170" y="435" text-anchor="middle" font-size="9">history += answer → next iter</text>
+  <rect x="420" y="418" width="200" height="26" rx="4" fill="#cce5ff" stroke="#007bff"/>
+  <text x="520" y="435" text-anchor="middle" font-size="9">action.execute → record_outcome</text>
+  <line x1="310" y1="402" x2="170" y2="418" stroke="#333" marker-end="url(#a2)"/>
+  <line x1="390" y1="402" x2="520" y2="418" stroke="#333" marker-end="url(#a2)"/>
+  <text x="155" y="408" font-size="8">ANSWER</text>
+  <text x="505" y="408" font-size="8">TOOL</text>
+  <path d="M 170 444 L 170 480 L 120 480 L 120 140 L 200 140" fill="none" stroke="#666" stroke-dasharray="5" marker-end="url(#a2)"/>
+  <path d="M 520 444 L 520 480 L 580 480 L 580 140 L 500 140" fill="none" stroke="#666" stroke-dasharray="5" marker-end="url(#a2)"/>
+  <text x="95" y="495" font-size="8" fill="#666">loop back</text>
+  <rect x="240" y="498" width="220" height="28" rx="4" fill="#16213e"/>
+  <text x="350" y="516" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Return FINAL from history</text>
+  <line x1="350" y1="276" x2="350" y2="498" stroke="#333" stroke-dasharray="4"/>
+</svg>
+</div>
+
+<h2>5. Data flow: memory, artifacts, history</h2>
+<div class="diagram-wrap">
+<svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="arr3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#333"/></marker></defs>
+  <rect x="10" y="30" width="100" height="60" rx="4" fill="#533483"/>
+  <text x="60" y="55" text-anchor="middle" fill="#fff" font-size="10">Tool result</text>
+  <text x="60" y="72" text-anchor="middle" fill="#eee" font-size="8">&gt; 4 KB?</text>
+  <rect x="140" y="20" width="120" height="80" rx="4" fill="#f4f6fa" stroke="#666"/>
+  <text x="200" y="48" text-anchor="middle" font-size="9" font-weight="bold">ArtifactStore</text>
+  <text x="200" y="64" text-anchor="middle" font-size="8">state/artifacts/</text>
+  <text x="200" y="80" text-anchor="middle" font-size="8">id: art:abc123...</text>
+  <rect x="290" y="30" width="110" height="60" rx="4" fill="#533483"/>
+  <text x="345" y="55" text-anchor="middle" fill="#fff" font-size="10">Memory entry</text>
+  <text x="345" y="72" text-anchor="middle" fill="#eee" font-size="8">short descriptor</text>
+  <rect x="430" y="20" width="120" height="80" rx="4" fill="#e8f4fc" stroke="#1a508b"/>
+  <text x="490" y="48" text-anchor="middle" font-size="9" font-weight="bold">Perception</text>
+  <text x="490" y="68" text-anchor="middle" font-size="8">attach_artifact_id</text>
+  <text x="490" y="84" text-anchor="middle" font-size="8">on goal when needed</text>
+  <rect x="580" y="30" width="110" height="60" rx="4" fill="#1a508b"/>
+  <text x="635" y="55" text-anchor="middle" fill="#fff" font-size="10">Decision</text>
+  <text x="635" y="72" text-anchor="middle" fill="#eee" font-size="8">full text excerpt</text>
+  <path d="M110 60 L140 60" stroke="#333" marker-end="url(#arr3)"/>
+  <path d="M260 60 L290 60" stroke="#333" marker-end="url(#arr3)"/>
+  <path d="M400 60 L430 60" stroke="#333" marker-end="url(#arr3)"/>
+  <path d="M550 60 L580 60" stroke="#333" marker-end="url(#arr3)"/>
+  <text x="60" y="120" text-anchor="middle" font-size="9">Action stores blob</text>
+  <text x="345" y="120" text-anchor="middle" font-size="9">Memory never holds full HTML</text>
+  <text x="635" y="120" text-anchor="middle" font-size="9">Only when Perception attaches</text>
+  <rect x="10" y="140" width="680" height="50" rx="4" fill="#fff8e6" stroke="#996"/>
+  <text x="350" y="162" text-anchor="middle" font-size="9"><tspan font-weight="bold">Run history</tspan> (in-memory per run): answers + action summaries + artifact_id per iter</text>
+  <text x="350" y="178" text-anchor="middle" font-size="8">Used by Perception for done detection and by Decision for context</text>
+</svg>
+</div>
+
+<h2 class="page-break">6. MCP tools (nine tools)</h2>
+<p>Implemented in <code>mcp_server.py</code>, launched as stdio subprocess from <code>agent6.py</code>.</p>
+<table>
+  <tr><th>Tool</th><th>Purpose</th><th>Typical preset</th></tr>
+  <tr><td><code>web_search</code></td><td>Tavily / search API for live results</td><td>b, d</td></tr>
+  <tr><td><code>fetch_url</code></td><td>Download page (Wikipedia uses MediaWiki API + curl fallback)</td><td>a, d</td></tr>
+  <tr><td><code>get_time</code></td><td>Current date/time JSON</td><td>c1</td></tr>
+  <tr><td><code>currency_convert</code></td><td>FX conversion</td><td>general</td></tr>
+  <tr><td><code>read_file</code></td><td>Read workspace or state paths (not raw art: in args)</td><td>c1, d</td></tr>
+  <tr><td><code>list_dir</code></td><td>List directory contents</td><td>c1</td></tr>
+  <tr><td><code>create_file</code></td><td>Create reminder / output files</td><td>c1</td></tr>
+  <tr><td><code>update_file</code></td><td>Overwrite file</td><td>general</td></tr>
+  <tr><td><code>edit_file</code></td><td>Patch file contents</td><td>general</td></tr>
+</table>
+
+<h2>7. Assignment presets (Queries A–D)</h2>
+<table>
+  <tr><th>Preset</th><th>Query intent</th><th>What it proves</th><th>State cleanup</th></tr>
+  <tr>
+    <td><strong>a</strong></td>
+    <td>Fetch Claude Shannon Wikipedia; birth/death dates + 3 contributions</td>
+    <td><code>fetch_url</code>, large artifact, Perception attach, Decision extract</td>
+    <td>Clean <code>state/</code> before run</td>
+  </tr>
+  <tr>
+    <td><strong>b</strong></td>
+    <td>Tokyo family activities + Saturday weather + pick best</td>
+    <td>Multi-goal planning, <code>web_search</code>, weather (wttr.in), synthesis</td>
+    <td>Clean <code>state/</code></td>
+  </tr>
+  <tr>
+    <td><strong>c1</strong></td>
+    <td>Remember mom's birthday 15 May 2026; calendar reminders</td>
+    <td><code>remember</code>, <code>create_file</code> under <code>state/reminders/</code></td>
+    <td>Clean <code>state/</code></td>
+  </tr>
+  <tr>
+    <td><strong>c2</strong></td>
+    <td>When is mom's birthday?</td>
+    <td>Memory recall without re-fetching — <strong>do not delete state after c1</strong></td>
+    <td>Keep <code>state/</code> from c1</td>
+  </tr>
+  <tr>
+    <td><strong>d</strong></td>
+    <td>Search asyncio best practices; read top 3; numbered consensus list</td>
+    <td>Search + multiple fetches + synthesis answer</td>
+    <td>Clean <code>state/</code></td>
+  </tr>
+</table>
+
+<pre>uv run python agent6.py --preset a
+uv run python agent6.py --preset b
+uv run python agent6.py --preset c1
+uv run python agent6.py --preset c2   # after c1, same state/
+uv run python agent6.py --preset d</pre>
+
+<h2>8. File map</h2>
+<table>
+  <tr><th>File / folder</th><th>Role</th></tr>
+  <tr><td><code>agent6.py</code></td><td>Main loop, CLI presets, MCP session</td></tr>
+  <tr><td><code>schemas.py</code></td><td>Pydantic: Goal, PerceptionState, DecisionStep, etc.</td></tr>
+  <tr><td><code>memory.py</code></td><td>Persistent memory read/write</td></tr>
+  <tr><td><code>perception.py</code></td><td>Goal observation LLM call</td></tr>
+  <tr><td><code>decision.py</code></td><td>Single-goal next step</td></tr>
+  <tr><td><code>action.py</code></td><td>MCP tool execution + artifact threshold</td></tr>
+  <tr><td><code>gateway.py</code></td><td>HTTP client to LLM Gateway V3/V2</td></tr>
+  <tr><td><code>artifacts.py</code></td><td>Content-addressable blob store</td></tr>
+  <tr><td><code>mcp_server.py</code></td><td>MCP tool implementations</td></tr>
+  <tr><td><code>prompts/</code></td><td>Role-specific system prompts</td></tr>
+  <tr><td><code>tests/</code></td><td>Unit tests (goal isolation, loop mocks)</td></tr>
+  <tr><td><code>scripts/run_all_queries.sh</code></td><td>Batch all presets with delay + log file</td></tr>
+  <tr><td><code>state/</code></td><td>Runtime: memory.json, artifacts/, reminders/ (gitignored)</td></tr>
+  <tr><td><code>llm_gatewayV3/</code></td><td>External course gateway — must run separately</td></tr>
+</table>
+
+<h2>9. How to run (step by step)</h2>
+<ol>
+  <li><strong>Terminal 1</strong> — Start gateway:<br>
+    <code>cd llm_gatewayV3 &amp;&amp; ./run.sh</code> (listens on port 8101)</li>
+  <li><strong>Terminal 2</strong> — Project setup:<br>
+    <code>cd eag-cognitive-agent</code> → <code>cp .env.example .env</code> → set <code>GEMINI_API_KEY</code> → <code>uv sync</code></li>
+  <li><strong>Clean state</strong> (except before c2):<br>
+    <code>rm -rf state workspace &amp;&amp; mkdir -p state workspace</code></li>
+  <li><strong>Run preset</strong>: <code>uv run python agent6.py --preset a</code></li>
+  <li><strong>Batch</strong> (optional): <code>./scripts/run_all_queries.sh</code> → log under <code>logs/</code></li>
+</ol>
+
+<div class="box warn">
+  <strong>Rate limits:</strong> Running all presets back-to-back can hit Gemini 503/backoff. Wait 30–60s between presets or use <code>PRESET_DELAY</code> in the batch script.
+</div>
+
+<h2>10. Troubleshooting</h2>
+<table>
+  <tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+  <tr><td>502 / gateway error</td><td>Expired or missing <code>GEMINI_API_KEY</code></td><td>Update <code>.env</code>, restart gateway</td></tr>
+  <tr><td>503 / rate limit</td><td>Too many LLM calls in short time</td><td>Pause between presets; gateway retries with backoff</td></tr>
+  <tr><td>Token overflow on iter 2</td><td>Full artifact sent to Decision without excerpt</td><td>Decision uses excerpt; Perception attaches only when needed</td></tr>
+  <tr><td>Wikipedia 403</td><td>httpx blocked by site</td><td>MediaWiki API + curl fallback in <code>fetch_url</code></td></tr>
+  <tr><td>c2 forgets birthday</td><td><code>state/</code> deleted after c1</td><td>Run c2 immediately after c1 without <code>rm -rf state</code></td></tr>
+  <tr><td>Goals never finish</td><td>Perception / history done rules</td><td>Check logs: <code>[perception]</code> open/done lines per iter</td></tr>
+</table>
+
+<h2>Quick reference — one paragraph</h2>
+<p><strong>EAG Cognitive Agent</strong> is a four-role agent: <em>Perception</em> maintains goals, <em>Decision</em> acts on one goal at a time (answer or tool), <em>Action</em> runs MCP tools and stores large results as artifacts, and <em>Memory</em> ties runs together in <code>state/memory.json</code>. The orchestrator in <code>agent6.py</code> loops until all goals are done, then returns the best final answer from run history.</p>
+
+<div class="footer">
+  EAG Cognitive Agent — EAG V3 Session 6 · School of AI
+</div>
+
+</body>
+</html>

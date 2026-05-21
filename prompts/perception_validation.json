@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PerceptionLLMOutput",
+  "type": "object",
+  "properties": {
+    "goals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": { "type": "string" },
+          "done": { "type": "boolean" },
+          "artifact_index": { "type": ["integer", "null"] }
+        },
+        "required": ["text", "done"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["goals"],
+  "additionalProperties": false
+}

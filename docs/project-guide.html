@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>EAG Cognitive Agent — Architecture Guide</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    @page { size: A4; margin: 18mm 16mm; }
+    html, body {
+      margin: 0; padding: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.45;
+      color: #1a1a2e;
+      background: #fff;
+    }
+    body {
+      max-width: 100%;
+      padding: 12px 14px 24px;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    h1 { font-size: 20pt; color: #0f3460; margin: 0 0 8px; border-bottom: 3px solid #e94560; padding-bottom: 6px; }
+    h2 { font-size: 14pt; color: #16213e; margin: 22px 0 10px; page-break-after: avoid; }
+    h3 { font-size: 11.5pt; color: #0f3460; margin: 14px 0 6px; page-break-after: avoid; }
+    p, li { margin: 0 0 6px; }
+    ul, ol { margin: 4px 0 10px; padding-left: 22px; }
+    .subtitle { color: #555; font-size: 10pt; margin-bottom: 16px; }
+    .box {
+      background: #f8f9fc;
+      border: 1px solid #d0d7e2;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin: 10px 0;
+      page-break-inside: avoid;
+    }
+    .warn { background: #fff8e6; border-color: #e6c200; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      font-size: 9.5pt;
+      table-layout: fixed;
+      page-break-inside: avoid;
+    }
+    th, td {
+      border: 1px solid #c8d0dc;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    th { background: #16213e; color: #fff; font-weight: 600; }
+    tr:nth-child(even) td { background: #f4f6fa; }
+    code, pre {
+      font-family: "Consolas", "Ubuntu Mono", monospace;
+      font-size: 8.5pt;
+      background: #eef1f6;
+      border-radius: 3px;
+    }
+    code { padding: 1px 4px; }
+    pre {
+      padding: 8px 10px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      margin: 8px 0;
+      border: 1px solid #d0d7e2;
+    }
+    .diagram-wrap {
+      width: 100%;
+      max-width: 100%;
+      margin: 12px 0;
+      page-break-inside: avoid;
+      overflow: hidden;
+    }
+    .diagram-wrap svg {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+    }
+    .legend { font-size: 9pt; color: #444; margin-top: 4px; }
+    .page-break { page-break-before: always; }
+    .toc a { color: #0f3460; text-decoration: none; }
+    .footer { margin-top: 24px; font-size: 9pt; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 8px; }
+  </style>
+</head>
+<body>
+
+<h1>EAG Cognitive Agent</h1>
+<p class="subtitle">EAG V3 Session 6 · Four-role cognitive agent · MCP tools · LLM Gateway V3<br>
+School of AI — Complete project guide with architecture diagrams</p>
+
+<p>See <code>README.md</code> in the repo for setup and run instructions. Regenerate PDF: <code>./scripts/generate_guide_pdf.sh</code></p>
+
+<div class="footer">
+  EAG Cognitive Agent — EAG V3 Session 6 · School of AI
+</div>
+
+</body>
+</html>

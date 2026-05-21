@@ -1,0 +1,58 @@
+# --- Secrets (never commit) ---
+.env
+.env.*
+!.env.example
+.envrc
+*.pem
+*.key
+credentials.json
+secrets.json
+**/secrets/
+**/*_secret*
+**/*_credentials*
+
+# --- Python ---
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# --- Runtime / local state ---
+state/
+logs/
+workspace/
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Course LLM Gateway (local install; may contain venv, DB, .env) ---
+llm_gatewayV3/
+llm_gatewayV2/
+
+# --- macOS / archives ---
+__MACOSX/
+.DS_Store
+Thumbs.db
+*.zip
+
+# --- IDE ---
+.cursor/
+.vscode/
+.idea/
+*.swp
+*~
+
+# --- Generated docs (source HTML + script are tracked) ---
+docs/*.pdf
+
+# --- Misc ---
+*.log
