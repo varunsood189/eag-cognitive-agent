@@ -288,6 +288,11 @@ uv sync
 uv run python scripts/index_ai_jobs_corpus.py
 ```
 
+readme for a-h
+/eag-cognitive-agent/readme_output_prompts.md
+for part 2 
+/eag-cognitive-agent/logs/custom-agent7-20260529-213113.log
+
 ## License
 
 See [LICENSE](LICENSE).
