@@ -1,7 +1,7 @@
 [project]
 name = "eag-cognitive-agent"
 version = "0.1.0"
-description = "EAG V3 Session 6 — four-role cognitive agent (Memory, Perception, Decision, Action)"
+description = "EAG V3 Session 7 — cognitive agent with FAISS vector memory and document indexing"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -12,6 +12,9 @@ dependencies = [
     "ddgs>=7.0",
     "crawl4ai>=0.4",
     "tavily-python>=0.5",
+    "faiss-cpu>=1.8.0",
+    "numpy>=1.26",
+    "tqdm>=4.67.3",
 ]
 
 [project.optional-dependencies]

@@ -44,14 +44,14 @@ Large web pages are stored as **artifacts** (`art:...`). Memory keeps a short ha
 
 | File | Purpose |
 |------|---------|
-| `agent6.py` | Main loop and CLI |
+| `agent7.py` | Main loop and CLI |
 | `schemas.py` | Data shapes between roles |
 | `memory.py` | Persistent `state/memory.json` |
 | `perception.py` | Goal list and done flags |
 | `decision.py` | One tool or one answer per step |
 | `action.py` | MCP dispatch |
 | `mcp_server.py` | Nine tools (search, fetch, files, time, …) |
-| `gateway.py` | Talks to LLM Gateway V3 on port 8101 |
+| `gateway.py` | Talks to LLM Gateway V7 on port 8107 |
 | `artifacts.py` | Big files under `state/artifacts/` |
 
 ---
@@ -66,7 +66,7 @@ Large web pages are stored as **artifacts** (`art:...`). Memory keeps a short ha
 | **c2** | Same `state/` — recall birthday from memory |
 | **d** | Search, read top pages, synthesize a list |
 
-Run: `uv run python agent6.py --preset a` (and b, c1, c2, d).
+Run: `uv run python agent7.py --preset a` (and b, c1, c2, d).
 
 ---
 
@@ -74,7 +74,7 @@ Run: `uv run python agent6.py --preset a` (and b, c1, c2, d).
 
 1. **Python 3.11+** and **uv** — `uv sync` in project folder  
 2. **`.env`** — at least `GEMINI_API_KEY`  
-3. **LLM Gateway V3** running — `cd llm_gatewayV3 && ./run.sh` (port 8101)  
+3. **LLM Gateway V7** running — `cd llm_gatewayV7 && ./run.sh` (port 8107)  
 4. **Clean state** before most presets: `rm -rf state workspace && mkdir -p state workspace`  
    - **Exception:** do not delete `state/` before preset **c2** if you already ran **c1**
 

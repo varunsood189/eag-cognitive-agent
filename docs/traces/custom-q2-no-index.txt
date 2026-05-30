@@ -1,0 +1,11 @@
+# Custom query trace (no-index)
+# 2026-05-29T16:00:59.653192+00:00
+
+QUERY:
+Where can someone work fully from home in machine learning and still earn above two hundred thousand dollars?
+
+MEMORY HITS:
+(none)
+
+ANSWER:
+I cannot answer from the job salary knowledge base because no indexed records were retrieved for this question.

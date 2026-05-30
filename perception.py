@@ -8,6 +8,7 @@ import uuid
 from pathlib import Path
 
 from gateway import gateway_chat, parse_structured, response_format_from_model
+from prompt_render import format_memory_hits_for_perception
 from schemas import Goal, MemoryItem, Observation, PerceptionLLMOutput
 
 PROMPT_PATH = Path(__file__).resolve().parent / "prompts" / "perception_system.txt"
@@ -28,6 +29,76 @@ def _first_url(query: str) -> str | None:
     return m.group(0).rstrip(".,;)")
 
 
+def _hits_show_indexed_papers(hits: list[MemoryItem]) -> bool:
+    for h in hits:
+        blob = f"{h.descriptor or ''} {h.source or ''}"
+        if "[workspace:papers/" in blob or "workspace:papers/" in blob:
+            return True
+        val = h.value or {}
+        if val.get("chunk"):
+            src = str(val.get("source") or val.get("path") or "")
+            if "papers/" in src:
+                return True
+    return False
+
+
+def _query_is_indexing_run(query: str) -> bool:
+    q = query.lower()
+    return any(
+        k in q
+        for k in (
+            "index every",
+            "index all",
+            "make searchable",
+            "how many chunk",
+            "index the file",
+        )
+    )
+
+
+def _seed_indexed_corpus_goals(query: str, hits: list[MemoryItem]) -> Observation | None:
+    """When papers are already in memory, plan RAG + answer — not re-fetch/index."""
+    if not _hits_show_indexed_papers(hits) or _query_is_indexing_run(query):
+        return None
+    q = query.lower()
+    if any(k in q for k in ("compare", "contrast", " differ ", " versus ", " vs ")):
+        return Observation(
+            goals=[
+                Goal(
+                    id="g1:seed",
+                    text="Query the knowledge base for how the ReAct paper treats intermediate reasoning",
+                    done=False,
+                ),
+                Goal(
+                    id="g2:seed",
+                    text="Query the knowledge base for how the Chain-of-Thought paper treats intermediate reasoning",
+                    done=False,
+                ),
+                Goal(
+                    id="g3:seed",
+                    text="Compare the two papers' treatment of intermediate reasoning and answer the user",
+                    done=False,
+                ),
+            ]
+        )
+    if ("across" in q or "indexed" in q) and ("paper" in q or "corpus" in q):
+        return Observation(
+            goals=[
+                Goal(
+                    id="g1:seed",
+                    text="Query the knowledge base for the topic asked in the user query",
+                    done=False,
+                ),
+                Goal(
+                    id="g2:seed",
+                    text="Synthesise an answer from the retrieved knowledge-base hits",
+                    done=False,
+                ),
+            ]
+        )
+    return None
+
+
 def _seed_url_fetch_goals(query: str) -> Observation | None:
     """Query A pattern: exactly two goals — fetch once, then extract."""
     url = _first_url(query)
@@ -43,22 +114,6 @@ def _seed_url_fetch_goals(query: str) -> Observation | None:
             ),
         ]
     )
-
-
-def _format_hits(hits: list[MemoryItem]) -> tuple[str, list[str | None]]:
-    artifact_by_index: list[str | None] = []
-    lines: list[str] = []
-    for i, h in enumerate(hits):
-        art_note = ""
-        if h.artifact_id:
-            artifact_by_index.append(h.artifact_id)
-            art_note = f" artifact_index={len(artifact_by_index) - 1}"
-        else:
-            artifact_by_index.append(None)
-        lines.append(
-            f"[{i}] kind={h.kind} descriptor={h.descriptor!r} keywords={h.keywords}{art_note}"
-        )
-    return "\n".join(lines) if lines else "(no hits)", artifact_by_index
 
 
 def _format_history(history: list[dict]) -> str:
@@ -102,12 +157,56 @@ def _history_satisfies_goal(goal: Goal, history: list[dict]) -> bool:
                 return True
 
         if tool == "fetch_url" and _action_ok(desc):
-            if any(k in text_l for k in ("fetch", "weather", "forecast")):
+            if _first_url(goal.text) or any(
+                k in text_l for k in ("weather", "forecast")
+            ):
                 return True
 
-        if tool in ("create_file", "update_file", "edit_file", "list_dir", "read_file"):
+        if tool in ("create_file", "update_file", "edit_file"):
             if _action_ok(desc):
                 return True
+
+        if tool == "list_dir" and _action_ok(desc):
+            if any(k in text_l for k in ("list", "directory", "discover", "files under")):
+                return True
+
+        if tool == "read_file" and _action_ok(desc):
+            if any(k in text_l for k in ("read", "open file", "inspect file", "load file")):
+                return True
+            if "extract" in text_l and "page" in text_l:
+                return True
+
+        if tool in ("index_document", "index_directory") and _action_ok(desc):
+            if any(k in text_l for k in ("searchable", "index", "ingest", "corpus")):
+                return True
+
+        if tool == "search_knowledge" and _action_ok(desc):
+            if any(
+                k in text_l
+                for k in (
+                    "compare",
+                    "contrast",
+                    "summar",
+                    "synthes",
+                    "answer the user",
+                )
+            ):
+                continue
+            if any(
+                k in text_l
+                for k in (
+                    "knowledge base",
+                    "knowledge",
+                    "corpus",
+                    "indexed",
+                    "query",
+                    "search",
+                    "retrieve",
+                )
+            ):
+                body = str(ev.get("result_summary") or desc)
+                if "text:" in body or "chunk_preview" in body or "[workspace:" in body:
+                    return True
     return False
 
 
@@ -153,8 +252,11 @@ def observe(
         seeded = _seed_url_fetch_goals(query)
         if seeded:
             return seeded
+        seeded = _seed_indexed_corpus_goals(query, hits)
+        if seeded:
+            return seeded
 
-    hits_block, artifact_index_map = _format_hits(hits)
+    hits_block, artifact_index_map = format_memory_hits_for_perception(hits)
     user = (
         f"USER QUERY:\n{query}\n\n"
         f"RUN ID: {run_id}\n\n"

@@ -26,16 +26,19 @@ dist/
 build/
 *.egg-info/
 
-# --- Runtime / local state ---
+# --- Runtime / local state (rebuilt on each machine) ---
 state/
+state_jobs/
 logs/
 workspace/
-*.db
-*.sqlite
-*.sqlite3
+*.faiss
+index_ids.json
+
+# --- Part 2: Kaggle CSV is local-only; corpus .md items ARE committed ---
+data/ai_jobs/raw/
 
 # --- Course LLM Gateway (local install; may contain venv, DB, .env) ---
-llm_gatewayV3/
+llm_gatewayV7/
 llm_gatewayV2/
 
 # --- macOS / archives ---
@@ -44,15 +47,26 @@ __MACOSX/
 Thumbs.db
 *.zip
 
-# --- IDE ---
+# --- IDE / editor ---
 .cursor/
-.vscode/
 .idea/
 *.swp
 *~
+.vscode/*
+!.vscode/settings.json
 
-# --- Generated docs (source HTML + script are tracked) ---
+# --- Local scratch / run dumps (not submission artifacts) ---
+readme_output_prompts.md
+readme_text_output.md
+*.plan.md
+
+# --- Generated docs (architecture PDF is tracked; other PDFs optional) ---
 docs/*.pdf
+!docs/EAG_Cognitive_Agent_Architecture.pdf
+docs/EAG_Cognitive_Agent_Architecture.html
 
 # --- Misc ---
 *.log
+*.db
+*.sqlite
+*.sqlite3

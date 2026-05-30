@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from gateway import gateway_chat
+from prompt_render import format_memory_hits
 from schemas import DecisionOutput, Goal, MemoryItem, ToolCall
 
 PROMPT_PATH = Path(__file__).resolve().parent / "prompts" / "decision_system.txt"
@@ -31,14 +32,6 @@ _EXCERPT_KEYWORDS = (
 
 def _system_prompt() -> str:
     return PROMPT_PATH.read_text(encoding="utf-8")
-
-
-def _format_hits(hits: list[MemoryItem]) -> str:
-    lines = []
-    for i, h in enumerate(hits):
-        art = f" artifact={h.artifact_id}" if h.artifact_id else ""
-        lines.append(f"[{i}] {h.kind}: {h.descriptor}{art}")
-    return "\n".join(lines) if lines else "(none)"
 
 
 def _excerpt_artifact(text: str) -> str:
@@ -67,33 +60,43 @@ def _excerpt_artifact(text: str) -> str:
     return joined + f"\n\n[Note: full artifact was {len(text)} chars; excerpt shown for extraction.]"
 
 
-def _goal_hints(goal: Goal, history: list[dict]) -> str:
-    t = goal.text.lower()
-    hints: list[str] = []
-    if "weather" in t or "forecast" in t:
-        hints.append(
-            "For weather: call fetch_url once with "
-            "https://wttr.in/Tokyo?format=j1 (or wttr.in/Tokyo?format=3 for text)."
-        )
-    if any(k in t for k in ("find", "search", "activities", "things to do", "family")):
-        hints.append(
-            "For activities: prefer web_search. If RECENT HISTORY already has web_search "
-            "JSON with titles/snippets, list 3 activities from that — do not re-search."
-        )
-        hints.append("Avoid fetch_url on tripadvisor.com (often 403).")
-    if any(k in t for k in ("appropriate", "which", "determine", "decide")):
-        hints.append(
-            "Synthesize from MEMORY HITS + RECENT HISTORY + ATTACHED ARTIFACTS. "
-            "Answer in text only — never read_file(art:...)."
-        )
+def _run_context(goal: Goal, history: list[dict], hits: list[MemoryItem]) -> str:
+    """Runtime facts only — policy lives in prompts/decision_system.txt."""
+    parts: list[str] = []
     fetched = [
         ev.get("arguments", {}).get("url")
         for ev in history
         if ev.get("kind") == "action" and ev.get("tool") == "fetch_url"
     ]
-    if fetched:
-        hints.append(f"URLs already fetched this run: {fetched}")
-    return "\n".join(hints) if hints else "(none)"
+    parts.append(
+        f"URLs already fetched this run: {fetched}" if fetched else "URLs already fetched this run: (none)"
+    )
+
+    goal_l = goal.text.lower()
+    searches = [
+        ev
+        for ev in history
+        if ev.get("kind") == "action" and ev.get("tool") == "search_knowledge"
+    ]
+    if len(searches) >= 2 and any(
+        k in goal_l for k in ("compare", "contrast", "synthes", "summar", "answer")
+    ):
+        parts.append(
+            "RECENT HISTORY already has multiple search_knowledge results; "
+            "respond with a plain-text answer from MEMORY HITS and those results."
+        )
+
+    chunk_hits = 0
+    for h in hits:
+        val = h.value or {}
+        if val.get("chunk") or "chunk:" in (h.descriptor or ""):
+            chunk_hits += 1
+    if chunk_hits >= 2 and any(k in goal_l for k in ("compare", "contrast")):
+        parts.append(
+            "MEMORY HITS already include indexed paper chunks; write the comparison in plain text."
+        )
+
+    return "\n".join(parts)
 
 
 def _format_attached(attached: list[tuple[str, bytes]]) -> str:
@@ -121,8 +124,8 @@ def next_step(
     user = (
         f"CURRENT GOAL (only goal you may work on):\n{goal.text}\n\n"
         f"GOAL ID: {goal.id}\n\n"
-        f"GOAL HINTS:\n{_goal_hints(goal, history)}\n\n"
-        f"MEMORY HITS:\n{_format_hits(hits)}\n\n"
+        f"RUN CONTEXT:\n{_run_context(goal, history, hits)}\n\n"
+        f"MEMORY HITS:\n{format_memory_hits(hits)}\n\n"
         f"ATTACHED ARTIFACTS:\n{_format_attached(attached)}\n\n"
         f"RECENT HISTORY:\n{json.dumps(history[-8:], ensure_ascii=True, indent=2)}\n"
     )

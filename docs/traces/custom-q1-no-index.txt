@@ -1,0 +1,11 @@
+# Custom query trace (no-index)
+# 2026-05-29T16:00:55.835241+00:00
+
+QUERY:
+Which roles offer strong pay for people who never manage staff and focus on hands-on modeling work?
+
+MEMORY HITS:
+(none)
+
+ANSWER:
+I cannot answer from the job salary knowledge base because no indexed records were retrieved for this question.

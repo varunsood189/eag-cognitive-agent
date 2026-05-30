@@ -1,0 +1,11 @@
+# Custom query trace (no-index)
+# 2026-05-29T16:01:11.668074+00:00
+
+QUERY:
+How does typical pay for AI engineers compare to data scientists when both are based in the United Kingdom?
+
+MEMORY HITS:
+(none)
+
+ANSWER:
+I cannot answer from the job salary knowledge base because no indexed records were retrieved for this question.

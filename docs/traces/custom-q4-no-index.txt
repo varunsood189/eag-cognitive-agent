@@ -1,0 +1,11 @@
+# Custom query trace (no-index)
+# 2026-05-29T16:01:07.582046+00:00
+
+QUERY:
+What is the highest listed compensation for a position centered on natural language processing or large language models?
+
+MEMORY HITS:
+(none)
+
+ANSWER:
+I cannot answer from the job salary knowledge base because no indexed records were retrieved for this question.

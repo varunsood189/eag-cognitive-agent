@@ -88,7 +88,7 @@
 <body>
 
 <h1>EAG Cognitive Agent</h1>
-<p class="subtitle">EAG V3 Session 6 · Four-role cognitive agent · MCP tools · LLM Gateway V3<br>
+<p class="subtitle">EAG V3 Session 6 · Four-role cognitive agent · MCP tools · LLM Gateway V7<br>
 School of AI — Complete project guide with architecture diagrams</p>
 
 <div class="box toc">
@@ -109,7 +109,7 @@ School of AI — Complete project guide with architecture diagrams</p>
 
 <h2>1. Project purpose</h2>
 <p>This assignment builds a <strong>multi-step AI agent</strong> that answers complex questions (web search, fetch pages, files, durable memory) without LangChain, LangGraph, or one monolithic prompt.</p>
-<p>Instead, cognition is split into <strong>four roles</strong>, each with a narrow contract (Pydantic models in <code>schemas.py</code>). Roles communicate through typed data and a shared <strong>run history</strong>. All LLM calls go through the course <strong>LLM Gateway</strong> (port 8101, with V2 fallback on 8100).</p>
+<p>Instead, cognition is split into <strong>four roles</strong>, each with a narrow contract (Pydantic models in <code>schemas.py</code>). Roles communicate through typed data and a shared <strong>run history</strong>. All LLM calls go through the course <strong>LLM Gateway</strong> (port 8107, with V2 fallback on 8100).</p>
 
 <div class="box">
   <strong>Design principles</strong>
@@ -133,7 +133,7 @@ School of AI — Complete project guide with architecture diagrams</p>
   <rect x="280" y="8" width="160" height="36" rx="6" fill="#e94560" stroke="#333"/>
   <text x="360" y="30" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">User Query</text>
   <rect x="260" y="58" width="200" height="40" rx="6" fill="#0f3460" stroke="#333"/>
-  <text x="360" y="82" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">agent6.py (orchestrator)</text>
+  <text x="360" y="82" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">agent7.py (orchestrator)</text>
   <line x1="360" y1="44" x2="360" y2="58" stroke="#333" marker-end="url(#arr)"/>
   <rect x="20" y="120" width="130" height="50" rx="6" fill="#533483" stroke="#333"/>
   <text x="85" y="142" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Memory</text>
@@ -162,7 +162,7 @@ School of AI — Complete project guide with architecture diagrams</p>
   <text x="470" y="234" text-anchor="middle" font-size="9">9 tools (stdio)</text>
   <rect x="580" y="200" width="120" height="44" rx="6" fill="#fff3cd" stroke="#996"/>
   <text x="640" y="218" text-anchor="middle" font-size="10" font-weight="bold">LLM Gateway</text>
-  <text x="640" y="234" text-anchor="middle" font-size="9">:8101 / :8100</text>
+  <text x="640" y="234" text-anchor="middle" font-size="9">:8107 / :8100</text>
   <line x1="85" y1="170" x2="110" y2="200" stroke="#666" stroke-dasharray="4"/>
   <line x1="535" y1="170" x2="470" y2="200" stroke="#666" stroke-dasharray="4"/>
   <line x1="235" y1="170" x2="640" y2="200" stroke="#996" stroke-dasharray="4"/>
@@ -296,7 +296,7 @@ School of AI — Complete project guide with architecture diagrams</p>
 </div>
 
 <h2 class="page-break">6. MCP tools (nine tools)</h2>
-<p>Implemented in <code>mcp_server.py</code>, launched as stdio subprocess from <code>agent6.py</code>.</p>
+<p>Implemented in <code>mcp_server.py</code>, launched as stdio subprocess from <code>agent7.py</code>.</p>
 <table>
   <tr><th>Tool</th><th>Purpose</th><th>Typical preset</th></tr>
   <tr><td><code>web_search</code></td><td>Tavily / search API for live results</td><td>b, d</td></tr>
@@ -345,40 +345,40 @@ School of AI — Complete project guide with architecture diagrams</p>
   </tr>
 </table>
 
-<pre>uv run python agent6.py --preset a
-uv run python agent6.py --preset b
-uv run python agent6.py --preset c1
-uv run python agent6.py --preset c2   # after c1, same state/
-uv run python agent6.py --preset d</pre>
+<pre>uv run python agent7.py --preset a
+uv run python agent7.py --preset b
+uv run python agent7.py --preset c1
+uv run python agent7.py --preset c2   # after c1, same state/
+uv run python agent7.py --preset d</pre>
 
 <h2>8. File map</h2>
 <table>
   <tr><th>File / folder</th><th>Role</th></tr>
-  <tr><td><code>agent6.py</code></td><td>Main loop, CLI presets, MCP session</td></tr>
+  <tr><td><code>agent7.py</code></td><td>Main loop, CLI presets, MCP session</td></tr>
   <tr><td><code>schemas.py</code></td><td>Pydantic: Goal, PerceptionState, DecisionStep, etc.</td></tr>
   <tr><td><code>memory.py</code></td><td>Persistent memory read/write</td></tr>
   <tr><td><code>perception.py</code></td><td>Goal observation LLM call</td></tr>
   <tr><td><code>decision.py</code></td><td>Single-goal next step</td></tr>
   <tr><td><code>action.py</code></td><td>MCP tool execution + artifact threshold</td></tr>
-  <tr><td><code>gateway.py</code></td><td>HTTP client to LLM Gateway V3/V2</td></tr>
+  <tr><td><code>gateway.py</code></td><td>HTTP client to LLM Gateway V7/V2</td></tr>
   <tr><td><code>artifacts.py</code></td><td>Content-addressable blob store</td></tr>
   <tr><td><code>mcp_server.py</code></td><td>MCP tool implementations</td></tr>
   <tr><td><code>prompts/</code></td><td>Role-specific system prompts</td></tr>
   <tr><td><code>tests/</code></td><td>Unit tests (goal isolation, loop mocks)</td></tr>
   <tr><td><code>scripts/run_all_queries.sh</code></td><td>Batch all presets with delay + log file</td></tr>
   <tr><td><code>state/</code></td><td>Runtime: memory.json, artifacts/, reminders/ (gitignored)</td></tr>
-  <tr><td><code>llm_gatewayV3/</code></td><td>External course gateway — must run separately</td></tr>
+  <tr><td><code>llm_gatewayV7/</code></td><td>External course gateway — must run separately</td></tr>
 </table>
 
 <h2>9. How to run (step by step)</h2>
 <ol>
   <li><strong>Terminal 1</strong> — Start gateway:<br>
-    <code>cd llm_gatewayV3 &amp;&amp; ./run.sh</code> (listens on port 8101)</li>
+    <code>cd llm_gatewayV7 &amp;&amp; ./run.sh</code> (listens on port 8107)</li>
   <li><strong>Terminal 2</strong> — Project setup:<br>
     <code>cd eag-cognitive-agent</code> → <code>cp .env.example .env</code> → set <code>GEMINI_API_KEY</code> → <code>uv sync</code></li>
   <li><strong>Clean state</strong> (except before c2):<br>
     <code>rm -rf state workspace &amp;&amp; mkdir -p state workspace</code></li>
-  <li><strong>Run preset</strong>: <code>uv run python agent6.py --preset a</code></li>
+  <li><strong>Run preset</strong>: <code>uv run python agent7.py --preset a</code></li>
   <li><strong>Batch</strong> (optional): <code>./scripts/run_all_queries.sh</code> → log under <code>logs/</code></li>
 </ol>
 
@@ -398,7 +398,7 @@ uv run python agent6.py --preset d</pre>
 </table>
 
 <h2>Quick reference — one paragraph</h2>
-<p><strong>EAG Cognitive Agent</strong> is a four-role agent: <em>Perception</em> maintains goals, <em>Decision</em> acts on one goal at a time (answer or tool), <em>Action</em> runs MCP tools and stores large results as artifacts, and <em>Memory</em> ties runs together in <code>state/memory.json</code>. The orchestrator in <code>agent6.py</code> loops until all goals are done, then returns the best final answer from run history.</p>
+<p><strong>EAG Cognitive Agent</strong> is a four-role agent: <em>Perception</em> maintains goals, <em>Decision</em> acts on one goal at a time (answer or tool), <em>Action</em> runs MCP tools and stores large results as artifacts, and <em>Memory</em> ties runs together in <code>state/memory.json</code>. The orchestrator in <code>agent7.py</code> loops until all goals are done, then returns the best final answer from run history.</p>
 
 <div class="footer">
   EAG Cognitive Agent — EAG V3 Session 6 · School of AI

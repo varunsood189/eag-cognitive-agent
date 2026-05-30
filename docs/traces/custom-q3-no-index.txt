@@ -1,0 +1,11 @@
+# Custom query trace (no-index)
+# 2026-05-29T16:01:03.630961+00:00
+
+QUERY:
+What jobs suit someone at the very beginning of their career outside the United States?
+
+MEMORY HITS:
+(none)
+
+ANSWER:
+I cannot answer from the job salary knowledge base because no indexed records were retrieved for this question.

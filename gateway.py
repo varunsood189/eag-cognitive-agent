@@ -1,4 +1,4 @@
-"""LLM Gateway V3 client (V2-compatible fallback)."""
+"""LLM Gateway V7 client (V2-compatible fallback)."""
 
 from __future__ import annotations
 
@@ -14,15 +14,15 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parent / ".env")
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-V3_URL = os.getenv("LLM_GATEWAY_V3_URL", "http://localhost:8101")
+V7_URL = os.getenv("LLM_GATEWAY_V7_URL", "http://localhost:8107")
 V2_URL = os.getenv("LLM_GATEWAY_V2_URL", "http://localhost:8100")
 
 
 def _find_gateway_client_dir() -> Path | None:
     here = Path(__file__).resolve().parent
     candidates = [
-        here / "llm_gatewayV3",
-        here.parent / "llm_gatewayV3",
+        here / "llm_gatewayV7",
+        here.parent / "llm_gatewayV7",
         here.parent / "Assignment 5" / "71c832d6-d71c-40e4-9912-fa26c61addba" / "llm_gatewayV2",
         here.parent / "llm_gatewayV2",
     ]
@@ -46,12 +46,12 @@ def _import_course_llm() -> type | None:
 
 
 class GatewayClient:
-    """HTTP client for gateway /v1/chat with auto_route (V3) or provider override (V2)."""
+    """HTTP client for gateway /v1/chat with auto_route (V7) or provider override (V2)."""
 
     def __init__(self) -> None:
         self._course_llm_cls = _import_course_llm()
-        self._v3_ok: bool | None = None
-        self._active_url = V3_URL
+        self._v7_ok: bool | None = None
+        self._active_url = V7_URL
 
     def _probe(self, url: str) -> bool:
         try:
@@ -61,17 +61,17 @@ class GatewayClient:
             return False
 
     def ensure_gateway(self) -> str:
-        if self._v3_ok is None:
-            if self._probe(V3_URL):
-                self._v3_ok = True
-                self._active_url = V3_URL
+        if self._v7_ok is None:
+            if self._probe(V7_URL):
+                self._v7_ok = True
+                self._active_url = V7_URL
             elif self._probe(V2_URL):
-                self._v3_ok = False
+                self._v7_ok = False
                 self._active_url = V2_URL
             else:
                 raise RuntimeError(
-                    f"No LLM gateway reachable at {V3_URL} or {V2_URL}. "
-                    "Start llm_gatewayV3 (port 8101) or llm_gatewayV2 (port 8100)."
+                    f"No LLM gateway reachable at {V7_URL} or {V2_URL}. "
+                    "Start llm_gatewayV7 (port 8107) or llm_gatewayV2 (port 8100)."
                 )
         return self._active_url
 
@@ -81,13 +81,13 @@ class GatewayClient:
         provider = kwargs.pop("provider", None)
 
         # V2 has no router pool — map auto_route to provider hints
-        if not self._v3_ok and auto_route:
+        if not self._v7_ok and auto_route:
             if auto_route in ("perception", "memory"):
                 provider = provider or "g"
             # decision: leave provider None for failover
 
         body = {k: v for k, v in kwargs.items() if v is not None}
-        if auto_route and self._v3_ok:
+        if auto_route and self._v7_ok:
             body["auto_route"] = auto_route
         if provider:
             body["provider"] = provider
@@ -163,6 +163,27 @@ def response_format_from_model(model: type) -> dict:
         "name": model.__name__,
         "strict": True,
     }
+
+
+def embed(text: str, task_type: str = "retrieval_document") -> dict:
+    """Call V7 POST /v1/embed. Returns {embedding, dim, model, provider, ...}."""
+    url = get_gateway().ensure_gateway()
+    if not url.rstrip("/").endswith("8107") and V7_URL not in url:
+        # Embed exists only on V7; probe V7 directly.
+        if get_gateway()._probe(V7_URL):
+            url = V7_URL
+        else:
+            raise RuntimeError(
+                f"Embedding requires LLM Gateway V7 at {V7_URL}. "
+                "Start llm_gatewayV7 (./run.sh) with Ollama nomic-embed-text."
+            )
+    body = {"text": text, "task_type": task_type}
+    if get_gateway()._course_llm_cls is not None:
+        llm = get_gateway()._course_llm_cls(base_url=url)
+        return llm.embed(text, task_type=task_type)
+    r = httpx.post(f"{url.rstrip('/')}/v1/embed", json=body, timeout=120.0)
+    r.raise_for_status()
+    return r.json()
 
 
 def parse_structured(reply: dict, model: type):
