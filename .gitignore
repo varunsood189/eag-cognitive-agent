@@ -63,7 +63,9 @@ readme_text_output.md
 # --- Generated docs (architecture PDF is tracked; other PDFs optional) ---
 docs/*.pdf
 !docs/EAG_Cognitive_Agent_Architecture.pdf
+!docs/EAG_Cognitive_Agent_Architecture_IEEE.pdf
 docs/EAG_Cognitive_Agent_Architecture.html
+docs/EAG_Cognitive_Agent_Architecture_IEEE.html
 
 # --- Misc ---
 *.log

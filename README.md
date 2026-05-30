@@ -176,10 +176,18 @@ To add a tool for a new corpus format: implement it in `mcp_server.py` with a cl
 
 When a role misbehaves, use [docs/rendering-inquiry-checklist.md](docs/rendering-inquiry-checklist.md) — fix `prompt_render.py` / history summarisation before adding SYSTEM rules.
 
-**Architecture PDF:** [docs/EAG_Cognitive_Agent_Architecture.pdf](docs/EAG_Cognitive_Agent_Architecture.pdf) (roles, RAG, presets, Part 2). Regenerate:
+**Architecture PDFs:**
+
+| Document | Format |
+|----------|--------|
+| [docs/EAG_Cognitive_Agent_Architecture.pdf](docs/EAG_Cognitive_Agent_Architecture.pdf) | Project guide (single-column) |
+| [docs/EAG_Cognitive_Agent_Architecture_IEEE.pdf](docs/EAG_Cognitive_Agent_Architecture_IEEE.pdf) | IEEE conference style (two-column, Abstract, Index Terms, numbered sections) |
+
+Regenerate both:
 
 ```bash
-./scripts/build_architecture_pdf.sh
+./scripts/build_architecture_pdf.sh          # also builds IEEE PDF
+./scripts/build_architecture_pdf_ieee.sh     # IEEE only
 ```
 
 ### 4. Tests

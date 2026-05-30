@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Build docs/EAG_Cognitive_Agent_Architecture.pdf from Markdown + print CSS (Chromium).
+# Build docs/EAG_Cognitive_Agent_Architecture_IEEE.pdf (IEEE conference layout).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-MD="$ROOT/docs/EAG_Cognitive_Agent_Architecture.md"
-CSS="$ROOT/docs/architecture-pdf.css"
-HTML="$ROOT/docs/EAG_Cognitive_Agent_Architecture.html"
-PDF="$ROOT/docs/EAG_Cognitive_Agent_Architecture.pdf"
+MD="$ROOT/docs/EAG_Cognitive_Agent_Architecture_IEEE.md"
+CSS="$ROOT/docs/ieee-architecture-pdf.css"
+HTML="$ROOT/docs/EAG_Cognitive_Agent_Architecture_IEEE.html"
+PDF="$ROOT/docs/EAG_Cognitive_Agent_Architecture_IEEE.pdf"
 
 if [[ ! -f "$MD" ]]; then
   echo "Missing $MD" >&2
@@ -64,8 +64,3 @@ fi
 
 echo "Wrote $PDF"
 ls -lh "$PDF"
-
-if [[ -x "$ROOT/scripts/build_architecture_pdf_ieee.sh" ]]; then
-  echo ""
-  "$ROOT/scripts/build_architecture_pdf_ieee.sh"
-fi

@@ -274,11 +274,14 @@ Tests cover memory retrieval, perception history/done rules, indexed corpus seed
 ./scripts/run_custom_queries.sh
 ```
 
-**Regenerate architecture PDF:**
+**Regenerate architecture PDFs:**
 
 ```bash
-./scripts/build_architecture_pdf.sh
+./scripts/build_architecture_pdf.sh          # project guide + IEEE
+./scripts/build_architecture_pdf_ieee.sh     # IEEE conference layout only
 ```
+
+IEEE source: `docs/EAG_Cognitive_Agent_Architecture_IEEE.md` → `docs/EAG_Cognitive_Agent_Architecture_IEEE.pdf`
 
 ---
 

@@ -1,0 +1,258 @@
+/* IEEE conference-style print layout (Chromium headless → PDF) */
+*, *::before, *::after { box-sizing: border-box; }
+
+@page {
+  size: letter;
+  margin: 0.75in 0.625in 0.75in 0.625in;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 10pt;
+  line-height: 1.15;
+  color: #000;
+  background: #fff;
+}
+
+/* Two-column body (front matter uses .ieee-span-all) */
+body {
+  column-count: 2;
+  column-gap: 0.25in;
+  column-fill: balance;
+  text-align: justify;
+  hyphens: auto;
+}
+
+.ieee-span-all {
+  column-span: all;
+  break-inside: avoid;
+}
+
+/* Title block */
+.ieee-title-block {
+  text-align: center;
+  margin: 0 0 12pt;
+  padding: 0 0.25in;
+}
+
+.ieee-title-block h1.title {
+  font-size: 24pt;
+  font-weight: normal;
+  line-height: 1.1;
+  margin: 0 0 10pt;
+  color: #000;
+  border: none;
+  padding: 0;
+}
+
+.ieee-authors {
+  font-size: 11pt;
+  margin: 0 0 4pt;
+  line-height: 1.2;
+}
+
+.ieee-affiliation {
+  font-size: 10pt;
+  font-style: italic;
+  margin: 0 0 14pt;
+}
+
+/* Abstract & index terms (IEEE style) */
+.ieee-abstract,
+.ieee-index-terms {
+  margin: 0 0 10pt;
+  font-size: 9pt;
+  line-height: 1.2;
+  text-align: justify;
+}
+
+.ieee-abstract-label,
+.ieee-index-label {
+  font-weight: bold;
+  font-style: normal;
+  display: inline;
+}
+
+.ieee-abstract p,
+.ieee-index-terms p {
+  display: inline;
+  margin: 0;
+}
+
+/* Hide pandoc duplicate title */
+header#title-block-header {
+  display: none;
+}
+
+/* Section headings — IEEE: centered small caps Roman */
+h2 {
+  font-size: 10pt;
+  font-weight: bold;
+  font-variant: small-caps;
+  text-align: center;
+  letter-spacing: 0.02em;
+  margin: 12pt 0 6pt;
+  padding: 0;
+  border: none;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+h2::first-letter {
+  font-variant: normal;
+  font-size: 10pt;
+}
+
+h3 {
+  font-size: 10pt;
+  font-weight: bold;
+  font-style: italic;
+  margin: 8pt 0 4pt;
+  page-break-after: avoid;
+}
+
+h4 {
+  font-size: 10pt;
+  font-weight: normal;
+  font-style: italic;
+  margin: 6pt 0 3pt;
+}
+
+p {
+  margin: 0 0 6pt;
+  text-indent: 0;
+}
+
+p + p.ieee-no-indent,
+.ieee-first-para {
+  text-indent: 0;
+}
+
+ul, ol {
+  margin: 0 0 6pt;
+  padding-left: 1.1em;
+}
+
+li {
+  margin-bottom: 2pt;
+}
+
+li > p { margin: 0; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 6pt 0 8pt;
+  font-size: 8pt;
+  table-layout: fixed;
+  page-break-inside: avoid;
+}
+
+caption {
+  caption-side: top;
+  font-size: 8pt;
+  font-weight: bold;
+  text-align: center;
+  margin: 0 0 4pt;
+}
+
+th, td {
+  border: 1px solid #000;
+  padding: 3px 4px;
+  vertical-align: top;
+  text-align: left;
+}
+
+th {
+  background: #fff;
+  font-weight: bold;
+}
+
+code {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 9pt;
+}
+
+pre {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 7.5pt;
+  line-height: 1.2;
+  background: #fff;
+  border: none;
+  padding: 0;
+  margin: 4pt 0 6pt;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  page-break-inside: avoid;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+}
+
+.ieee-figure {
+  column-span: all;
+  margin: 8pt 0;
+  page-break-inside: avoid;
+}
+
+.ieee-figure pre {
+  font-size: 7pt;
+  text-align: center;
+  border: 1px solid #ccc;
+  padding: 6pt;
+}
+
+.ieee-figure-caption {
+  font-size: 8pt;
+  text-align: center;
+  margin-top: 4pt;
+}
+
+.ieee-table-wrap {
+  column-span: all;
+  margin: 6pt 0 10pt;
+}
+
+hr {
+  border: none;
+  margin: 8pt 0;
+}
+
+strong { font-weight: bold; }
+
+/* References */
+.ieee-references ol {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.ieee-references li {
+  margin-bottom: 4pt;
+  text-indent: -1.2em;
+  padding-left: 1.2em;
+  font-size: 8pt;
+}
+
+.ieee-references li::before {
+  content: "[" counter(list-item) "] ";
+  font-weight: normal;
+}
+
+.ieee-footer {
+  column-span: all;
+  font-size: 8pt;
+  text-align: center;
+  margin-top: 12pt;
+  font-style: italic;
+}
+
+@media print {
+  a { color: #000; text-decoration: none; }
+  h2 { page-break-before: auto; }
+  h2.ieee-page-break { page-break-before: always; }
+}
